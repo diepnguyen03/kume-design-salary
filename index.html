@@ -230,6 +230,28 @@ function palette(n){
   const out=[]; for(let i=0;i<n;i++) out.push(base[i%base.length]); return out;
 }
 
+// Departments that work directly on projects vs. back-office (non-project) departments.
+const PROJECT_DEPTS = ['Architecture','Interior Design','Landscape','Master Planning','Structure','MEP','Project Management'];
+const BACKOFFICE_DEPTS = ['Administration','HR','Finance','IT'];
+
+// Two-hue palette: one hue ramp (blue) for project departments, another hue ramp (amber) for back-office.
+// Shading (dark -> light) follows the order departments appear in deptLabels (already sorted by size elsewhere).
+function deptPalette(deptLabels){
+  const projectShades = ['#1c3f66','#2a5686','#3a6ea5','#5586b8','#71a0cc','#94bcdd','#b8d4ea'];
+  const backofficeShades = ['#7a5b1e','#96742a','#b18e3c','#c7a75c','#d8c07f','#e6d6a3'];
+
+  const projectList = deptLabels.filter(d=>PROJECT_DEPTS.includes(d));
+  const backofficeList = deptLabels.filter(d=>BACKOFFICE_DEPTS.includes(d));
+  const otherList = deptLabels.filter(d=>!PROJECT_DEPTS.includes(d) && !BACKOFFICE_DEPTS.includes(d));
+
+  const colorMap = {};
+  projectList.forEach((d,i)=> colorMap[d] = projectShades[i % projectShades.length]);
+  backofficeList.forEach((d,i)=> colorMap[d] = backofficeShades[i % backofficeShades.length]);
+  otherList.forEach((d,i)=> colorMap[d] = '#7a7f87');
+
+  return deptLabels.map(d=>colorMap[d]);
+}
+
 function getMonthRange(){
   let iFrom = months.indexOf(fMonthFrom.value), iTo = months.indexOf(fMonthTo.value);
   if (iFrom > iTo) [iFrom, iTo] = [iTo, iFrom];
@@ -408,7 +430,7 @@ function renderDeptPanel(rows, monthsList, emps, projSel, lastMonth, prevMonth){
     o.gross += r.gross; o.count += 1;
   });
   const deptLabels = Object.keys(byDept).sort((a,b)=>byDept[b].gross-byDept[a].gross);
-  const deptColors = palette(deptLabels.length);
+  const deptColors = deptPalette(deptLabels);
 
   // compute vs-previous-month delta per department, rendered as a label at the end of each bar
   const deltaInfo = deptLabels.map(d=>{
